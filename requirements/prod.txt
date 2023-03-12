@@ -1,0 +1,17 @@
+Django==3.2
+pre-commit
+PyJWT
+djangorestframework
+python-environ
+# pydantic
+# django-cors-headers
+# email-validator
+# psycopg2-binary
+# django-ninja
+# celery==5.2.3
+# django-celery-beat==2.4.0
+# redis
+# django-redis
+# ffmpeg-python
+# channels==3.0
+# channels_redis==3.2

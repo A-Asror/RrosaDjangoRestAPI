@@ -1,0 +1,11 @@
+ENV SERVICES_DIR=/services
+
+RUN mkdir $SERVICES_DIR
+
+COPY ./ $SERVICES_DIR
+
+WORKDIR $SERVICES_DIR
+
+RUN chmod +x $SERVICES_DIR
+
+ENTRYPOINT ["/services/entrypoint.sh"]

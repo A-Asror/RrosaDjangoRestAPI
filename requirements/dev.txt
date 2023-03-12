@@ -1,0 +1,6 @@
+-r prod.txt
+
+# Only Developer Packages
+django-querycount
+django-debug-toolbar==3.4.0
+# django-elasticsearch-debug-toolbar

@@ -1,0 +1,199 @@
+
+version: "3"
+
+networks:
+  handly-man-network:
+    driver: bridge
+
+services:
+
+  backend:
+    container_name: ${PROJECT_NAME}-backend
+    hostname: ${PROJECT_NAME}-backend
+    build:
+      context: ./
+      dockerfile: .docker/dev/backend/Dockerfile
+    env_file:
+      - .env
+    ports:
+      - ${PORT:-8000}:8000
+    volumes:
+      - ./:/home/app/backend
+      - static_volume:/home/app/backend/static
+      - media_volume:/home/app/backend/media
+    security_opt:
+      - seccomp:unconfined
+    tty: true
+    restart: unless-stopped
+    networks:
+      - handly-man-network
+    depends_on:
+      - db
+      - redis
+      - elasticsearch
+      - celery
+
+  celery:
+    container_name: ${PROJECT_NAME}-celery
+    hostname: ${PROJECT_NAME}-celery
+    build:
+      context: ./
+      dockerfile: .docker/dev/celery/Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./:/home/app/backend
+      - static_volume:/home/app/backend/static
+      - media_volume:/home/app/backend/media
+    security_opt:
+      - seccomp:unconfined
+    tty: true
+    restart: unless-stopped
+    networks:
+      - handly-man-network
+    links:
+      - redis
+    depends_on:
+      - redis
+
+  celery_flower:
+    container_name: ${PROJECT_NAME}-celery-flower
+    hostname: ${PROJECT_NAME}-celery-flower
+    build:
+      context: ./
+      dockerfile: .docker/dev/flower/Dockerfile
+    env_file:
+      - .env
+    ports:
+      - 9090:9090
+    volumes:
+      - ./:/home/app/backend
+      - static_volume:/home/app/backend/static
+      - media_volume:/home/app/backend/media
+    security_opt:
+      - seccomp:unconfined
+    tty: true
+    restart: unless-stopped
+    networks:
+      - handly-man-network
+    links:
+      - redis
+    depends_on:
+      - celery
+
+  db:
+    container_name: ${PROJECT_NAME}-db
+    hostname: ${PROJECT_NAME}-db-host
+    image: postgis/postgis:14-3.3
+    env_file:
+      - .docker/dev/postgresql/config.ini
+    ports:
+      - ${POSTGRESQL_PORT:-5432}:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - handly-man-network
+    tty: true
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_HOST=${DB_HOST}
+      - POSTGRES_PORT=${DB_PORT}
+
+  redis:
+    container_name: ${PROJECT_NAME}-redis
+    image: redis:alpine
+    hostname: ${PROJECT_NAME}-redis
+#    command: redis-server --save 20 1  --loglevel warning --requirepass ${REDIS_PASSWORD}
+    env_file:
+      - .docker/dev/redis/config.ini
+    ports:
+      - ${REDIS_PORT:-6379}:6379
+    volumes:
+      - redis:/data
+      - .docker/dev/redis/sysctl.conf:/etc/sysctl.conf
+#    entrypoint: .docker/dev/redis/entrypoint.sh
+    tty: true
+    restart: unless-stopped
+    networks:
+      - handly-man-network
+
+  elasticsearch:
+    container_name: ${PROJECT_NAME}-elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_STACK_VERSION}
+    env_file:
+      - .docker/dev/elasticsearch/config.ini
+    ports:
+      - ${ELASTIC_PORT:-9200}:9200
+    volumes:
+      - ./.docker/dev/elasticsearch/elasticsearch.yaml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - elasticsearch:/usr/share/elasticsearch/data
+      - certs:/usr/share/elasticsearch/config/certs
+    networks:
+      - handly-man-network
+    tty: true
+    restart: unless-stopped
+
+  kibana:
+    container_name: ${PROJECT_NAME}-kibana
+    image: docker.elastic.co/kibana/kibana:${KIBANA_STACK_VERSION}
+    env_file:
+      - ./.docker/dev/kibana/config.ini
+    ports:
+      - ${KIBANA_PORT:-5601}:5601
+    volumes:
+      - kibana:/usr/share/kibana/data
+    networks:
+      - handly-man-network
+    tty: true
+    restart: unless-stopped
+    depends_on:
+      - elasticsearch
+
+  nginx:
+    container_name: ${PROJECT_NAME}-nginx
+    image: nginx:stable-alpine
+    ports:
+      - 9000:9000
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    restart: unless-stopped
+    volumes:
+      - static_volume:/home/app/backend/static
+      - media_volume:/home/app/backend/media
+      - ./.docker/dev/nginx:/etc/nginx/conf.d
+      - ./.docker/dev/certbot/conf:/etc/letsencrypt
+      - ./.docker/dev/certbot/www:/var/www/certbot
+
+  cloudflared:
+    image: erisamoe/cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    env_file:
+      - .docker/dev/cloudflare/config.ini
+    depends_on:
+      - nginx
+
+  certbot:
+    image: certbot/certbot
+    container_name: ${PROJECT_NAME}-certbot
+    restart: unless-stopped
+    volumes:
+      - ./.docker/dev/certbot/conf:/etc/letsencrypt
+      - ./.docker/dev/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+volumes:
+  static_volume:
+  media_volume:
+  postgres_data:
+    driver: local
+  redis:
+    driver: local
+  elasticsearch:
+    driver: local
+  certs:
+    driver: local
+  kibana:
+    driver: local

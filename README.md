@@ -2,10 +2,10 @@
 
 ##  Скачать Приложение📖
 ### **HTTPS**
-_**git clone:**_ _https://github.com/A-Asror/BaseDjango.git_
+_**git clone:**_ _https://github.com/A-Asror/RrosaDjangoRestAPI.git_
 
 ### **SSH**
-_**git clone:**_ _git@github.com:A-Asror/BaseDjango.git_
+_**git clone:**_ _git@github.com:A-Asror/RrosaDjangoRestAPI.git_
 
 ##  Настройка проекта 🔨
 ### **Rename core folder and remove .git folder**

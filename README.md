@@ -7,6 +7,26 @@ _**git clone:**_ _https://github.com/A-Asror/BaseDjango.git_
 ### **SSH**
 _**git clone:**_ _git@github.com:A-Asror/BaseDjango.git_
 
+##  Настройка проекта 🔨
+### **Rename core folder and remove .git folder**
+```shell
+Linux
+  sudo mv ./RrosaDjangoRestAPI <New Folder Name>
+  cd <New Folder Name>
+  sudo rm -r .git
+Windows:
+  ren RrosaDjangoRestAPI <New Folder Name>
+  cd <New Folder Name>
+  rmdir ".git"
+```
+### **Update .env file**
+```shell
+Linux
+  sudo mv .env.example .env
+Windows:
+  ren .env.example .env
+```
+
 ##  Настройка виртуального окружения ☁️
 ### **Linux**
 ```shell

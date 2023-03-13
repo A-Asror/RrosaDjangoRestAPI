@@ -10,7 +10,7 @@ _**git clone:**_ _git@github.com:A-Asror/RrosaDjangoRestAPI.git_
 ##  Настройка проекта | Set up the project 🔨
 ### **Rename core folder and remove .git folder**
 ```shell
-Linux
+Linux:
   sudo mv ./RrosaDjangoRestAPI <New Folder Name>
   cd <New Folder Name>
   sudo rm -r .git
@@ -28,14 +28,14 @@ Windows:
 ```
 
 ##  Настройка виртуального окружения | Configuring the Virtual Environment ☁️
-### **Linux**
+### **Linux 🐧**
 ```shell
 python3 -m venv venv
 OR
 python -m venv venv
 source venv\bin\activate
 ```
-### **Windows**
+### **Windows 💻**
 ```shell
 cmd
 py -m venv venv
